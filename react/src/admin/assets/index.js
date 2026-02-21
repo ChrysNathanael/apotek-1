@@ -62,10 +62,11 @@ import IcDelete from './icon/ic_delete.png'
 import IcFilter from './icon/ic_filter.png'
 import IcExport from './icon/ic_export.png'
 import IcAddNew from './icon/ic_add_new.png'
+import IcDetail from './icon/ic_detail.png'
 
 
 export {
     favicon, IconSort, IcMenu, IcLoginMatahari, IcLoginRoket, IcLoginSatelit, IcLoginBulan, IcLoginRoketDiskon, IcLoginPiringTerbang, IcLoginAstronot, IcLoginBackgroundPng, IcDashboardBU, IcDashboardActiveBU, IcDepositBU, IcDepositActiveBU, IcRegisteredUserBU, IcRegisteredUserActiveBU, IcActiveUserBU, IcActiveUserActiveBU, IcRedemptionBU, IcRedemptionActiveBU, IcSettingBU, IcSettingActiveBU, IcLogoutBU, IcLineBU, IcMessagesBU, IcNotifBU, IcOpenNewTab, BtnFilter, BtnExportData, BtnTopUp, IcCopy, icRefresh, icArrowDown, icRedKYC, icGreenKYC, BtnExclamation, icQuestionMark, icCSWhatsApp, BtnDropdown, icInformation,
     IcApotek, IcApotek2, IcApotek3, IcApotek4, IcApotek5, IcApotek6, IcApotek7, IcApotek8, IcDashboard, IcMasterData, IcTransaksi,
-    IcActive, IcInactive, IcDelete, IcFilter, IcExport, IcAddNew
+    IcActive, IcInactive, IcDelete, IcFilter, IcExport, IcAddNew, IcDetail
 };

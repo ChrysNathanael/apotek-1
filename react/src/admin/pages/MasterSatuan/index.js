@@ -1,19 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
-import { Gap, HeaderPage, ModalAddNewObat, ModalExport, ModalFilter, Pagination, SkeletonListData } from '../../components'
+import { Gap, HeaderPage, ModalAddNewSatuan, ModalExport, ModalFilterSatuan, Pagination, SkeletonListData } from '../../components'
 import { useDispatch } from 'react-redux';
 import { setForm } from '../../redux';
 import { useCookies } from 'react-cookie';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-super-responsive-table/dist/SuperResponsiveTableStyle.css';
 import SweetAlert from 'react-bootstrap-sweetalert';
-import './master_obat.css';
+import './master_satuan.css';
 import { BtnExportData, BtnFilter, IcActive, IcAddNew, IcDelete, IcDetail, IcExport, IcFilter, IcInactive, icQuestionMark } from '../../assets';
 import { generateSignature, fetchStatus, FormatNumberComma, validEmail } from '../../utils/functions';
 import { AlertMessage, paths } from '../../utils';
-import xlsx from 'xlsx'
+import xlsx from 'xlsx';
 
-const MasterObat = () => {
+const MasterSatuan = () => {
     const history = useHistory();
     const [OrderBy, setOrderBy] = useState("")
     const [Order, setOrder] = useState("DESC")
@@ -44,6 +44,9 @@ const MasterObat = () => {
     const [ShowModalFilter, setShowModalFilter] = useState(false)
     const [ShowModalExport, setShowModalExport] = useState(false)
     const [ShowModalAddnew, setShowModalAddnew] = useState(false)
+    const [showDetail, setShowDetail] = useState(false);
+    const [selectedSatuan, setSelectedSatuan] = useState(null);
+
 
     const [FilterBy, setFilterBy] = useState("")
     const [SearchFilter, setSearchFilter] = useState("")
@@ -51,11 +54,7 @@ const MasterObat = () => {
     const [EndDate, setEndDate] = useState("")
     const [StatusFilter, setStatusFilter] = useState("")
 
-    const [ListMasterObat, setListMasterObat] = useState([])
-    const [ListMasterSupplier, setListMasterSupplier] = useState([])
-    const [ListSatuan, setListSatuan] = useState([])
-    const [ListKategori, setListKategori] = useState([])
-    const [ListMasterObatDetail, setListMasterObatDetail] = useState([])
+    const [ListMasterSatuan, setListMasterSatuan] = useState([])
 
     const [CurrentPage, setCurrentPage] = useState(1)
     const [TotalPage, setTotalPage] = useState(0)
@@ -66,14 +65,7 @@ const MasterObat = () => {
     const [EmailForExport, setEmailForExport] = useState("")
     const [EmailFilled, setEmailFilled] = useState("")
 
-    const [NamaObat, setNamaObat] = useState("")
-    const [Supplier, setSupplier] = useState("")
     const [Satuan, setSatuan] = useState("")
-    const [Kategori, setKategori] = useState("")
-
-    const [IdDeleteData, setIdDeleteData] = useState("")
-    const [KodeObatDeleteData, setKodeObatDeleteData] = useState("")
-    const [StatusDeleteData, setStatusDeleteData] = useState("")
 
     useEffect(() => {
         var CookieNama = getCookie("nama")
@@ -109,7 +101,7 @@ const MasterObat = () => {
         dispatch(setForm("Nama", switchedName))
         dispatch(setForm("PageActive", "ACTIVE_USERS"))
 
-        getListMasterObat(1)
+        getListMasterSatuan(1)
 
     }, [location.state]);
 
@@ -187,30 +179,25 @@ const MasterObat = () => {
         }
     }
 
-    const getListMasterObat = (currentPage, position) => {
-        let CookieParamKey = getCookie("paramkey")
-        let CookieUserID = getCookie("userid")
+    const getListMasterSatuan = (currentPage, position) => {
+        var CookieParamKey = getCookie("paramkey")
+        var CookieUserID = getCookie("userid")
 
         let filter = FilterBy
-        let valueSearchObat = ""
-        let valueSearchSupplier = ""
+        let valueSearchSatuan = ""
 
-        if (filter == "nama_obat") {
-            valueSearchObat = SearchFilter
-        } else if (filter == "supplier") {
-            valueSearchSupplier = SearchFilter
+        if (FilterBy === "satuan" && SearchFilter !== "") {
+            valueSearchSatuan = SearchFilter
         }
-
         let statusFilter = ""
         if (position == "reset-filter") {
-            valueSearchSupplier = ""
-            valueSearchObat = ""
+            valueSearchSatuan = ""
             statusFilter = ""
         } else {
             statusFilter = StatusFilter
         }
 
-        let rowPage = 5
+        let rowPage = 10
         if (position == "export") {
             rowPage = -1
         }
@@ -219,148 +206,12 @@ const MasterObat = () => {
             "Username": CookieUserID,
             "ParamKey": CookieParamKey,
             "Method": "SELECT",
-            "NamaObat": valueSearchObat,
-            "Supplier": valueSearchSupplier,
+            "satuan": valueSearchSatuan,
             "Status": statusFilter,
             "Order": "",
             "OrderBy": "",
             "Page": currentPage,
             "RowPage": rowPage
-        })
-
-        var enckey = paths.EncKey
-        var url = paths.URL_API_ADMIN + 'Obat'
-        var Signature = generateSignature(enckey, requestBody)
-
-        setLoading(true)
-
-        fetch(url, {
-            method: "POST",
-            body: requestBody,
-            headers: {
-                'Content-Type': 'application/json',
-                'Signature': Signature
-            },
-        })
-        .then(fetchStatus)
-        .then(response => response.json())
-        .then((data) => {
-            setLoading(false)
-
-            if (data.ErrorCode == "0") {
-                if (position == "export") {
-                    exportToExcel(data.Result)
-                } else {
-                    setListMasterObat(data.Result)
-                    setTotalRecords(data.TotalRecords)
-                    setTotalPage(data.TotalPage)
-                }
-                
-            } else {
-                if (data.ErrorMessage == "Error, status response <> 200") {
-                    setErrorMessageAlert("Data tidak ditemukan")
-                    setShowAlert(true);
-                    return false;
-                } else if (data.ErrorMessage === "Session Expired") {
-                    setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
-                    setShowAlert(true);
-                    return
-                } else {
-                    setErrorMessageAlert(data.ErrorMessage)
-                    setShowAlert(true);
-                    return false;
-                }
-            }
-        })
-        .catch((error) => {
-            setLoading(false)
-            if (error.message == 401) {
-                setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
-                setShowAlert(true);
-                return false;
-            } else if (error.message != 401) {
-                setErrorMessageAlert(AlertMessage.failedConnect);
-                setShowAlert(true);
-                return false;
-            }
-        });
-    }
-
-    const getListSupplier = () => {
-        let CookieParamKey = getCookie("paramkey")
-        let CookieUserID = getCookie("userid")
-
-        var requestBody = JSON.stringify({
-            "Username": CookieUserID,
-            "ParamKey": CookieParamKey,
-            "Method": "SELECT",
-            "Page": 1,
-            "RowPage": -1
-        })
-
-        var enckey = paths.EncKey
-        var url = paths.URL_API_ADMIN + 'Supplier'
-        var Signature = generateSignature(enckey, requestBody)
-
-        setLoading(true)
-
-        fetch(url, {
-            method: "POST",
-            body: requestBody,
-            headers: {
-                'Content-Type': 'application/json',
-                'Signature': Signature
-            },
-        })
-        .then(fetchStatus)
-        .then(response => response.json())
-        .then((data) => {
-            setLoading(false)
-
-            if (data.ErrorCode == "0") {
-                setListMasterSupplier(data.Result)
-                setTotalRecords(data.TotalRecords)
-                setTotalPage(data.TotalPage)
-            } else {
-                if (data.ErrorMessage == "Error, status response <> 200") {
-                    setErrorMessageAlert("Data tidak ditemukan")
-                    setShowAlert(true);
-                    return false;
-                } else if (data.ErrorMessage === "Session Expired") {
-                    setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
-                    setShowAlert(true);
-                    return
-                } else {
-                    setErrorMessageAlert(data.ErrorMessage)
-                    setShowAlert(true);
-                    return false;
-                }
-            }
-        })
-        .catch((error) => {
-            setLoading(false)
-            if (error.message == 401) {
-                setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
-                setShowAlert(true);
-                return false;
-            } else if (error.message != 401) {
-                setErrorMessageAlert(AlertMessage.failedConnect);
-                setShowAlert(true);
-                return false;
-            }
-        });
-    }
-
-    const getListSatuan = () => {
-        let CookieParamKey = getCookie("paramkey")
-        let CookieUserID = getCookie("userid")
-
-        var requestBody = JSON.stringify({
-            "Username": CookieUserID,
-            "ParamKey": CookieParamKey,
-            "Method": "SELECT",
-            "Page": 1,
-            "RowPage": -1
         })
 
         var enckey = paths.EncKey
@@ -383,9 +234,13 @@ const MasterObat = () => {
             setLoading(false)
 
             if (data.ErrorCode == "0") {
-                setListSatuan(data.Result)
-                setTotalRecords(data.TotalRecords)
-                setTotalPage(data.TotalPage)
+                 if (position == "export") {
+                    exportToExcel(data.Result)
+                } else {
+                    setListMasterSatuan(data.Result)
+                    setTotalRecords(data.TotalRecords)
+                    setTotalPage(data.TotalPage)
+                }
             } else {
                 if (data.ErrorMessage == "Error, status response <> 200") {
                     setErrorMessageAlert("Data tidak ditemukan")
@@ -404,6 +259,7 @@ const MasterObat = () => {
         })
         .catch((error) => {
             setLoading(false)
+
             if (error.message == 401) {
                 setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
                 setShowAlert(true);
@@ -416,134 +272,70 @@ const MasterObat = () => {
         });
     }
 
-    const getListKategori = () => {
-        let CookieParamKey = getCookie("paramkey")
-        let CookieUserID = getCookie("userid")
-
-        var requestBody = JSON.stringify({
-            "Username": CookieUserID,
-            "ParamKey": CookieParamKey,
-            "Method": "SELECT",
-            "Page": 1,
-            "RowPage": -1
-        })
-
-        var enckey = paths.EncKey
-        var url = paths.URL_API_ADMIN + 'Kategori'
-        var Signature = generateSignature(enckey, requestBody)
-
-        setLoading(true)
-
-        fetch(url, {
-            method: "POST",
-            body: requestBody,
-            headers: {
-                'Content-Type': 'application/json',
-                'Signature': Signature
-            },
-        })
-        .then(fetchStatus)
-        .then(response => response.json())
-        .then((data) => {
-            setLoading(false)
-
-            if (data.ErrorCode == "0") {
-                setListKategori(data.Result)
-                setTotalRecords(data.TotalRecords)
-                setTotalPage(data.TotalPage)
-            } else {
-                if (data.ErrorMessage == "Error, status response <> 200") {
-                    setErrorMessageAlert("Data tidak ditemukan")
-                    setShowAlert(true);
-                    return false;
-                } else if (data.ErrorMessage === "Session Expired") {
-                    setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
-                    setShowAlert(true);
-                    return
-                } else {
-                    setErrorMessageAlert(data.ErrorMessage)
-                    setShowAlert(true);
-                    return false;
-                }
-            }
-        })
-        .catch((error) => {
-            setLoading(false)
-            if (error.message == 401) {
-                setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
-                setShowAlert(true);
-                return false;
-            } else if (error.message != 401) {
-                setErrorMessageAlert(AlertMessage.failedConnect);
-                setShowAlert(true);
-                return false;
-            }
-        });
-    }
-
-    const getDetailObat = (id) => {
-        let CookieParamKey = getCookie("paramkey")
-        let CookieUserID = getCookie("userid")
-
-        var requestBody = JSON.stringify({
-            "Username": CookieUserID,
-            "ParamKey": CookieParamKey,
-            "Method": "SELECT",
-            "Id": id,
-            "Page": 1,
-            "RowPage": 1
-        })
-
-        var enckey = paths.EncKey
-        var url = paths.URL_API_ADMIN + 'Obat'
-        var Signature = generateSignature(enckey, requestBody)
-
-        setLoading(true)
-
-        fetch(url, {
-            method: "POST",
-            body: requestBody,
-            headers: {
-                'Content-Type': 'application/json',
-                'Signature': Signature
-            },
-        })
-        .then(fetchStatus)
-        .then(response => response.json())
-        .then((data) => {
-            setLoading(false)
-
-            if (data.ErrorCode == "0") {
-                setListMasterObatDetail(data.Result)
-            } else {
-                if (data.ErrorMessage == "Error, status response <> 200") {
-                    setErrorMessageAlert("Data tidak ditemukan")
-                    setShowAlert(true);
-                    return false;
-                } else if (data.ErrorMessage === "Session Expired") {
-                    setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
-                    setShowAlert(true);
-                    return
-                } else {
-                    setErrorMessageAlert(data.ErrorMessage)
-                    setShowAlert(true);
-                    return false;
-                }
-            }
-        })
-        .catch((error) => {
-            setLoading(false)
-            if (error.message == 401) {
-                setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
-                setShowAlert(true);
-                return false;
-            } else if (error.message != 401) {
-                setErrorMessageAlert(AlertMessage.failedConnect);
-                setShowAlert(true);
-                return false;
-            }
-        });
-    }
+    //    const getDetailSatuan = (id) => {
+    //         let CookieParamKey = getCookie("paramkey")
+    //         let CookieUserID = getCookie("userid")
+    
+    //         var requestBody = JSON.stringify({
+    //             "Username": CookieUserID,
+    //             "ParamKey": CookieParamKey,
+    //             "Method": "SELECT",
+    //             "Id": id,
+    //             "Page": 1,
+    //             "RowPage": 1
+    //         })
+    
+    //         var enckey = paths.EncKey
+    //         var url = paths.URL_API_ADMIN + 'Satuan'
+    //         var Signature = generateSignature(enckey, requestBody)
+    
+    //         setLoading(true)
+    
+    //         fetch(url, {
+    //             method: "POST",
+    //             body: requestBody,
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'Signature': Signature
+    //             },
+    //         })
+    //         .then(fetchStatus)
+    //         .then(response => response.json())
+    //         .then((data) => {
+    //             setLoading(false)
+    
+    //             if (data.ErrorCode == "0") {
+    //                 setListMasterSatuanDetail(data.Result);
+    //                 setShowModalDetail(true); // 👈 PENTING
+    //             } else {
+    //                 if (data.ErrorMessage == "Error, status response <> 200") {
+    //                     setErrorMessageAlert("Data tidak ditemukan")
+    //                     setShowAlert(true);
+    //                     return false;
+    //                 } else if (data.ErrorMessage === "Session Expired") {
+    //                     setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
+    //                     setShowAlert(true);
+    //                     return
+    //                 } else {
+    //                     setErrorMessageAlert(data.ErrorMessage)
+    //                     setShowAlert(true);
+    //                     return false;
+    //                 }
+    //             }
+    //         })
+    //         .catch((error) => {
+    //             setLoading(false)
+    //             if (error.message == 401) {
+    //                 setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
+    //                 setShowAlert(true);
+    //                 return false;
+    //             } else if (error.message != 401) {
+    //                 setErrorMessageAlert(AlertMessage.failedConnect);
+    //                 setShowAlert(true);
+    //                 return false;
+    //             }
+    //         });
+    //     }
 
     const handleButtonFilter = () => {
         // setSearchFilter("")
@@ -556,7 +348,7 @@ const MasterObat = () => {
         setSearchFilter("")
         setStatusFilter("")
         setShowModalFilter(false)
-        getListMasterObat(1, "reset-filter")
+        getListMasterSatuan(1, "reset-filter")
     }
 
     const handleSubmitFilter = () => {
@@ -568,11 +360,11 @@ const MasterObat = () => {
             }
         }
         setShowModalFilter(false)
-        getListMasterObat(1)
+        getListMasterSatuan(1)
     }
 
     const handleButtonExport = () => {
-        getListMasterObat(1, "export")
+        getListMasterSatuan(1, "export")  
     }
 
     const handleSubmitExport = () => {
@@ -597,7 +389,9 @@ const MasterObat = () => {
             return;
         }
         setCurrentPage(pageNumber);
-        getListMasterObat(pageNumber)
+        getListMasterSatuan(pageNumber)
+        
+
     };
 
     const getPageNumbers = () => {
@@ -643,103 +437,93 @@ const MasterObat = () => {
         return strip
     }
 
-    const handleValidasiDelete = (id, kodeObat, status) => {
-        // setIdDeleteData(id)
-        // setKodeObatDeleteData(kodeObat)
-        // setStatusDeleteData(status)
-        // setDeleteMessageAlert("Apakah Anda yakin menghapus data ini?")
-
-        let CookieParamKey = getCookie("paramkey")
-        let CookieUserID = getCookie("userid")
-
-        let statusUpdate = ""
-        if (status == "active") {
-            statusUpdate = "0"
-        } else {
-            statusUpdate = "1"
-        }
-
-        var requestBody = JSON.stringify({
-            "Username": CookieUserID,
-            "ParamKey": CookieParamKey,
-            "Method": "DELETE",
-            "Id": id,
-            "KodeObat": kodeObat,
-            "Status": statusUpdate
-        })
-
-        var enckey = paths.EncKey
-        var url = paths.URL_API_ADMIN + 'Obat'
-        var Signature = generateSignature(enckey, requestBody)
-
-        setLoading(true)
-
-        fetch(url, {
-            method: "POST",
-            body: requestBody,
-            headers: {
-                'Content-Type': 'application/json',
-                'Signature': Signature
-            },
-        })
-        .then(fetchStatus)
-        .then(response => response.json())
-        .then((data) => {
-            setLoading(false)
-
-            if (data.ErrorCode == "0") {
-                getListMasterObat(1)
-                // setShowAlert(false)
-                // setDeleteMessageAlert("")
-                setShowAlert(true)
-                setSuccessMessageTime("Sukses update status")
+        const handleValidasiDelete = (id, satuan, status) => {
+    
+            let CookieParamKey = getCookie("paramkey")
+            let CookieUserID = getCookie("userid")
+    
+            let statusUpdate = ""
+            if (status == "active") {
+                statusUpdate = "0"
             } else {
-                if (data.ErrorMessage == "Error, status response <> 200") {
-                    setErrorMessageAlert("Data tidak ditemukan")
+                statusUpdate = "1"
+            }
+    
+            var requestBody = JSON.stringify({
+                "Username": CookieUserID,
+                "ParamKey": CookieParamKey,
+                "Method": "DELETE",
+                "Id": id,
+                "satuan": satuan,
+                "Status": statusUpdate
+            })
+    
+            var enckey = paths.EncKey
+            var url = paths.URL_API_ADMIN + 'Satuan'
+            var Signature = generateSignature(enckey, requestBody)
+    
+            setLoading(true)
+    
+            fetch(url, {
+                method: "POST",
+                body: requestBody,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Signature': Signature
+                },
+            })
+            .then(fetchStatus)
+            .then(response => response.json())
+            .then((data) => {
+                setLoading(false)
+    
+                if (data.ErrorCode == "0") {
+                    getListMasterSatuan(1)
+                    // setShowAlert(false)
+                    // setDeleteMessageAlert("")
+                    setShowAlert(true)
+                    setSuccessMessageTime("Sukses update status")
+                } else {
+                    if (data.ErrorMessage == "Error, status response <> 200") {
+                        setErrorMessageAlert("Data tidak ditemukan")
+                        setShowAlert(true);
+                        return false;
+                    } else if (data.ErrorMessage === "Session Expired") {
+                        setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
+                        setShowAlert(true);
+                        return
+                    } else {
+                        setErrorMessageAlert(data.ErrorMessage)
+                        setShowAlert(true);
+                        return false;
+                    }
+                }
+            })
+            .catch((error) => {
+                setLoading(false)
+                if (error.message == 401) {
+                    setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
                     setShowAlert(true);
                     return false;
-                } else if (data.ErrorMessage === "Session Expired") {
-                    setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
-                    setShowAlert(true);
-                    return
-                } else {
-                    setErrorMessageAlert(data.ErrorMessage)
+                } else if (error.message != 401) {
+                    setErrorMessageAlert(AlertMessage.failedConnect);
                     setShowAlert(true);
                     return false;
                 }
-            }
-        })
-        .catch((error) => {
-            setLoading(false)
-            if (error.message == 401) {
-                setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
-                setShowAlert(true);
-                return false;
-            } else if (error.message != 401) {
-                setErrorMessageAlert(AlertMessage.failedConnect);
-                setShowAlert(true);
-                return false;
-            }
-        });
-    }
+            });
+        }
 
     const handleButtonAddNew = () => {
-        getListSupplier()
-        getListSatuan()
-        getListKategori()
         setShowModalAddnew(true)
     }
 
     const handleCloseAddNew = () => {
-        setNamaObat("")
-        setSupplier("")
         setSatuan("")
-        setKategori("")
         setShowModalAddnew(false)
     }
 
     const handleButtonSubmitAddNew = () => {
-        // hit API add new obat
+        // hit API add new Satuan
         let CookieParamKey = getCookie("paramkey")
         let CookieUserID = getCookie("userid")
 
@@ -747,14 +531,11 @@ const MasterObat = () => {
             "Username": CookieUserID,
             "ParamKey": CookieParamKey,
             "Method": "INSERT",
-            "NamaObat": NamaObat,
-            "Supplier": Supplier,
             "Satuan": Satuan,
-            "Kategori": Kategori
         })
 
         var enckey = paths.EncKey
-        var url = paths.URL_API_ADMIN + 'Obat'
+        var url = paths.URL_API_ADMIN + 'Satuan'
         var Signature = generateSignature(enckey, requestBody)
 
         setLoading(true)
@@ -775,6 +556,12 @@ const MasterObat = () => {
             if (data.ErrorCode == "0") {
                 setShowModalAddnew(false)
                 setShowAlert(true)
+                
+                //reset form
+                setSatuan("")
+
+                getListMasterSatuan(1)
+
                 setSuccessMessageTime("Sukses insert data")
             } else {
                 if (data.ErrorMessage == "Error, status response <> 200") {
@@ -805,34 +592,30 @@ const MasterObat = () => {
             }
         });
     }
+    
+        const renameAtributForClient = (csvData) => {
+            return csvData.map(function (row) {
+                return {
+                    Satuan: row.Satuan,  
+                    StatusSatuan:row.Status == "1" ? "Aktif" : "Tidak Aktif",
+                }
+            })
+        }
 
-    const renameAtributForClient = (csvData) => {
-        return csvData.map(function (row) {
-            return {
-                KodeObat: row.KodeObat, 
-                NamaObat: row.NamaObat, 
-                SupplierObat: row.Supplier,  
-                StatusObat:row.Status == "1" ? "Aktif" : "Tidak Aktif",
-                Satuan:row.Satuan,
-                Kategori:row.Kategori
-            }
-        })
-    }
-
-    const exportToExcel = (csvData) => {
-
-        var fileName = "export_master_obat";
-        var DataExcel = csvData;
-
-        var ws = "";
-            ws = xlsx.utils.json_to_sheet(removeAtribut(renameAtributForClient(DataExcel)));
-
-        const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
-
-        xlsx.writeFile(wb, fileName + ".xlsx")
-    }
-
-    const removeAtribut = (data) => {
+       const exportToExcel = (csvData) => {
+    
+            var fileName = "export_master_satuan";
+            var DataExcel = csvData;
+    
+            var ws = "";
+                ws = xlsx.utils.json_to_sheet(removeAtribut(renameAtributForClient(DataExcel)));
+    
+            const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+    
+            xlsx.writeFile(wb, fileName + ".xlsx")
+        }
+        
+           const removeAtribut = (data) => {
         data.forEach(dt => {
             delete dt.ParamKey;
             delete dt.UserID;
@@ -844,6 +627,107 @@ const MasterObat = () => {
         });
         return data;
     }
+
+    const handleSubmitUpdateSatuan = (formData) => {
+        let CookieParamKey = getCookie("paramkey")
+        let CookieUserID = getCookie("userid")
+
+        var requestBody = JSON.stringify({
+            "Username": CookieUserID,
+            "ParamKey": CookieParamKey,
+            "Method": "UPDATE",
+            "Id": formData.Id,
+            "Satuan": formData.Satuan,
+        })
+
+        var enckey = paths.EncKey
+        var url = paths.URL_API_ADMIN + 'Satuan'
+        var Signature = generateSignature(enckey, requestBody)
+
+        setLoading(true)
+
+        fetch(url, {
+            method: "POST",
+            body: requestBody,
+            headers: {
+                'Content-Type': 'application/json',
+                'Signature': Signature
+            },
+        })
+        .then(fetchStatus)
+        .then(response => response.json())
+        .then((data) => {
+            setLoading(false)
+
+            if (data.ErrorCode == "0") {
+                setShowModalAddnew(false)
+                setShowAlert(true)             
+                //reset form
+                setSatuan("")
+                getListMasterSatuan(1)
+
+                setSuccessMessageTime("Sukses insert data")
+            } else {
+                if (data.ErrorMessage == "Error, status response <> 200") {
+                    setErrorMessageAlert("Data tidak ditemukan")
+                    setShowAlert(true);
+                    return false;
+                } else if (data.ErrorMessage === "Session Expired") {
+                    setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
+                    setShowAlert(true);
+                    return
+                } else {
+                    setErrorMessageAlert(data.ErrorMessage)
+                    setShowAlert(true);
+                    return false;
+                }
+            }
+        })
+        .catch((error) => {
+            setLoading(false)
+            if (error.message == 401) {
+                setErrorMessageAlert("Sesi berakhir, silakan login ulang.");
+                setShowAlert(true);
+                return false;
+            } else if (error.message != 401) {
+                setErrorMessageAlert(AlertMessage.failedConnect);
+                setShowAlert(true);
+                return false;
+            }
+        });
+
+    
+
+    setLoading(true)
+
+    fetch(paths.URL_API_ADMIN + 'Satuan', {
+        method: "POST",
+        body: requestBody,
+        headers: {
+            'Content-Type': 'application/json',
+            'Signature': Signature
+        }
+    })
+    .then(fetchStatus)
+    .then(res => res.json())
+    .then(data => {
+        setLoading(false)
+        if (data.ErrorCode === "0") {
+            // setShowModalDetail(false)
+            getListMasterSatuan(CurrentPage)
+            setSuccessMessageTime("Update satuan berhasil")
+        } else {
+            setErrorMessageAlert(data.ErrorMessage)
+            setShowAlert(true)
+        }
+    })
+    .catch(() => {
+        setLoading(false)
+        setErrorMessageAlert("Gagal update data")
+        setShowAlert(true)
+    })
+}
+
 
     return (
         <div className='main-page'>
@@ -862,7 +746,7 @@ const MasterObat = () => {
                     <div className='container-table'>
                         <div className='container-content-table-header'>
                             <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                                <div className='card-content-text-sm-black2-title' style={{ fontWeight:'bold', fontSize:15 }}>Master Obat</div>
+                                <div className='card-content-text-sm-black2-title' style={{ fontWeight:'bold', fontSize:15 }}>Master Satuan</div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
                                 <div>
@@ -877,6 +761,8 @@ const MasterObat = () => {
                             </div>
                         </div>
 
+                        
+
                         {Loading ?
                             <div className="loader-container">
                                 <div className="spinner-border purple-spinner" />
@@ -886,42 +772,28 @@ const MasterObat = () => {
                                 <table className='table-content'>
                                     <tr className='table-content-tr'>
                                         <td className='table-content-td-header'>No</td>
-                                        <td className='table-content-td-header'>Kode Obat</td>
-                                        <td className='table-content-td-header' style={{ textAlign:'left' }}>Nama Obat</td>
-                                        <td className='table-content-td-header' style={{ textAlign:'left' }}>Supplier Obat</td>
-                                        <td className='table-content-td-header' style={{ textAlign:'center' }}>Status obat</td>
-                                        <td className='table-content-td-header' style={{ textAlign:'left' }}>Satuan obat</td>
-                                        <td className='table-content-td-header' style={{ textAlign:'left' }}>Kategori obat</td>
-                                        <td className='table-content-td-header' style={{ textAlign:'left' }}></td>
+                                        <td className='table-content-td-header' style={{ textAlign:'left' }}>Nama Satuan</td>
+                                        <td className='table-content-td-header' style={{ textAlign:'center' }}>Status</td>
                                     </tr>
-                                    {ListMasterObat.map((item, index) => {
+                                    {ListMasterSatuan.map((item, index) => {
                                         return <tr className='table-content-tr'>
                                             <td className='table-content-td'>{index + 1}</td>
-                                            <td className='table-content-td' style={{ color:'blue', cursor:'pointer' }} onClick={() => getDetailObat(item.Id)}>{item.KodeObat}</td>
-                                            <td className='table-content-td' style={{ textAlign:'left' }}>{item.NamaObat}</td>
-                                            <td className='table-content-td' style={{ textAlign:'left' }}>{item.Supplier}</td>
-                                            <td className='table-content-td-mid' style={{ textAlign:'center' }}>{item.Status == "1" ? 
-                                                <div onClick={() => handleValidasiDelete(item.Id, item.KodeObat, "active")} style={{ cursor:'pointer' }}>
+                                            <td className='table-content-td' style={{ textAlign:'left' }}>{item.Satuan}</td>
+                                            <td className='table-content-td' style={{ textAlign:'center' }}>{item.Status == "1" ? 
+                                                <div onClick={() => handleValidasiDelete(item.Id, item.satuan, "active")} style={{ cursor:'pointer' }}>
                                                     <img src={IcActive} style={{ width:18 }} />
                                                 </div> 
                                                 :
-                                                <div onClick={() => handleValidasiDelete(item.Id, item.KodeObat, "inactive")} style={{ cursor:'pointer' }}>
+                                                <div onClick={() => handleValidasiDelete(item.Id, item.satuan, "inactive")} style={{ cursor:'pointer' }}>
                                                     <img src={IcInactive} style={{ width:18 }} />
                                                 </div>}
-                                            </td> 
-                                            <td className='table-content-td' style={{ textAlign:'left' }}>{item.Satuan}</td>
-                                            <td className='table-content-td' style={{ textAlign:'left' }}>{item.Kategori}</td>
-                                            {/* <td className='table-content-td-mid' style={{ textAlign:'left' }}>
-                                                <div onClick={() => getDetailObat(item.Id)} style={{ cursor:'pointer' }}>
-                                                    <img src={IcDetail} style={{ width:18 }} />
-                                                </div>
-                                            </td> */}
+                                            </td>
                                         </tr>
                                     })}
                                 </table>
                             </div>}
 
-                        {Loading < 1 || !Loading && 
+                            {Loading < 1 || !Loading && 
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                             <div style={{ paddingTop:15, color:'red', fontSize:15, fontWeight:'bold' }}>Data Tidak Ditemukan</div>
                         </div>}
@@ -930,40 +802,29 @@ const MasterObat = () => {
                             <div style={{ display: 'flex', justifyContent: 'center' }}>
                                 <SkeletonListData width={200} height={30} />
                             </div>
-                            : TotalRecords < 1 ?
-                            <></>
-                            :
-                            <div style={{
+                            : <div style={{
                                 paddingTop: '20px',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'center',
                                 alignItems: 'center',
-                                fontWeight: 'bold'
                             }}> Total Data : {TotalRecords}
                             </div>}
+
                     </div>
                 </div>
 
-                <ModalAddNewObat
+
+                <ModalAddNewSatuan
                     onClickShowModal={ShowModalAddnew}
                     onClickCancel={() => handleCloseAddNew()}
-                    listSupplier={ListMasterSupplier}
-                    listSatuan={ListSatuan}
-                    listKategori={ListKategori}
-                    namaObat={NamaObat}
-                    setNamaObat={event => setNamaObat(event.target.value)}
-                    supplier={Supplier}
-                    setSupplier={event => setSupplier(event.target.value)}
-                    satuan={Satuan}
+                    Satuan={Satuan}
                     setSatuan={event => setSatuan(event.target.value)}
-                    kategori={Kategori}
-                    setKategori={event => setKategori(event.target.value)}
                     cancelAddNew={() => handleCloseAddNew()}
                     submitAddNew={() => handleButtonSubmitAddNew()}
                 />
 
-                <ModalFilter
+                <ModalFilterSatuan
                     onClickShowModal={ShowModalFilter}
                     onClickCancel={() => handleButtonFilter()}
                     filterBy={FilterBy}
@@ -979,7 +840,7 @@ const MasterObat = () => {
                     showDateFilter={false}
                     showStatusFilter={true}
                     showSearchFilter={true}
-                    showSupplier={true}
+                    showSatuan={true}
                     showName={true}
                     setStatusFilter={event => setStatusFilter(event.target.value)}
                     statusFilter={StatusFilter}
@@ -1037,26 +898,27 @@ const MasterObat = () => {
                     onConfirm={() => {
                         setShowAlert(false)
                         setSuccessMessage("")
+                        history.replace("/active-users")
                     }}
                     btnSize="sm">
                     {SuccessMessage}
                 </SweetAlert>
                 : ""}
-                
-                {SuccessMessageTime != "" ?
-                <SweetAlert
-                    success
-                    show={ShowAlert}
-                    timeout={1500}
-                    showConfirm={false}
-                    onConfirm={() => {
-                        setShowAlert(false)
-                        setSuccessMessageTime("")
-                    }}
-                    btnSize="sm">
-                    {SuccessMessageTime}
-                </SweetAlert>
-                : ""}
+
+            {SuccessMessageTime != "" ?
+            <SweetAlert
+                success
+                show={ShowAlert}
+                timeout={1500}
+                showConfirm={false}
+                onConfirm={() => {
+                    setShowAlert(false)
+                    setSuccessMessageTime("")
+                }}
+                btnSize="sm">
+                {SuccessMessageTime}
+            </SweetAlert>
+            : ""}
 
             {ErrorMessageAlert != "" ?
                 <SweetAlert
@@ -1084,29 +946,12 @@ const MasterObat = () => {
                     {ErrorMessageAlertLogout}
                 </SweetAlert>
                 : ""}
-                
-            {/* {DeleteMessageAlert != "" ?
-                <SweetAlert
-                    warning
-                    showCancel
-                    confirmBtnText="Ya, Hapus!"
-                    confirmBtnBsStyle="danger"
-                    cancelBtnText="Batal"
-                    title={DeleteMessageAlert}
-                    onConfirm={() => handleDelete()}
-                    onCancel={() => {
-                        setShowAlert(false)
-                        setDeleteMessageAlert("")
-                    }}
-                    focusCancelBtn>
-                </SweetAlert>
-                : ""} */}
-            {/* END OF ALERT */}
 
+        
             <Gap height={20} />
         </div>
     )
 }
 
 
-export default MasterObat
+export default MasterSatuan

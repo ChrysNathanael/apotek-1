@@ -1,21 +1,24 @@
 
 
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+// import { Logout } from '../../../utils/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { hover } from '@testing-library/user-event/dist/hover';
 import React, { useEffect, useState} from 'react';
 import { useCookies } from 'react-cookie';
 import { FaBoxes, FaImages, FaNetworkWired, FaTags, FaUserMinus, FaBars, FaUsers, FaUsersCog, FaComment } from 'react-icons/fa';
+// import { useIntl } from 'react-intl';
 import { Menu, MenuItem, Sidebar, SubMenu, useProSidebar, sidebarClasses, menuClasses } from 'react-pro-sidebar';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
-import { IcDashboard, IcLogoutBU, IcMasterData, IcMenu, IcTransaksi } from '../../../assets';
+import { useHistory, Link } from 'react-router-dom';
+import { favicon, IcActiveUserActiveBU, IcActiveUserBU, IcContent, IcDashboard, IcDashboardActiveBU, IcDashboardBU, IcDepositActiveBU, IcDepositBU, IcLogoutBU, IcMarketing, IcMasterData, IcMenu, IcMerchant, IconCollapse, IconContent, IconContentActive, IconDashboard, IconDotsVertical, IconMarketing, IconMarketingActive, IconMerchant, IconMerchantActive, IconOther, IconOtherActive, IconOverview, IconProfile, IconReport, IconReportActive, IconSetting, IconStarvoucher, IconStarvoucherActive, IconUser, IconVoucher, IcOther, IcOverview, IcRedemptionActiveBU, IcRedemptionBU, IcRegisteredUserActiveBU, IcRegisteredUserBU, IcSettingActiveBU, IcSettingBU, IcStarpoinReport, IcStarvoucher, IcTransaction, IcTransaksi } from '../../../assets';
+// import sidebarBg from './assets/bg1.jpg';
 import { setForm } from '../../../redux';
 import { paths } from '../../../utils';
 import { fetchStatus, generateSignature } from '../../../utils/functions';
-import { Gap, ModalLogout } from '../../atoms';
+// import { Button } from 'bootstrap';
+import { Button, Gap, ModalLogout } from '../../atoms';
 import './LeftMenu.css';
-import SweetAlert from 'react-bootstrap-sweetalert';
 
 const LeftMenu = ({ image, collapsed, rtl, toggled, handleToggleSidebar }) => {
 
@@ -36,10 +39,14 @@ const LeftMenu = ({ image, collapsed, rtl, toggled, handleToggleSidebar }) => {
     const { form }=useSelector(state=>state.PaketReducer);
     const dispatch = useDispatch()
     const [ListMenu,setListMenu] = useState(vMenu)
+    const [PageActive,setPageActive] = useState(1)
+    const [RowPage,setRowPage] = useState(20)
+    const [OrderBy,setOrderBy] = useState("")
+    const [Order,setOrder] = useState("DESC")
+    const [Nama,setNama] = useState("")
+    const [Role,setRole] = useState("")
 
-	const [ShowAlert, setShowAlert] = useState(true)
 	const [ShowModalLogout, setShowModalLogout] = useState(false)
-	const [SessionMessage, setSessionMessage] = useState("")
 
     useEffect(() => {
 		if (window) {
@@ -96,10 +103,8 @@ const LeftMenu = ({ image, collapsed, rtl, toggled, handleToggleSidebar }) => {
 					// setResultMessage("Data tidak ditemukan")
 				}
 			} else {
-				if (data.ErrorCode == "2") {
-					setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
-                    setShowAlert(true);
-                    return
+				if (data.ErrorMessage == "Param Key Expired") {
+					logout()
 					// setSessionMessage("Session Anda Telah Habis. Silahkan Login Kembali.");
 					// setShowAlert(true);
 				}
@@ -163,21 +168,7 @@ const LeftMenu = ({ image, collapsed, rtl, toggled, handleToggleSidebar }) => {
     }
 
   return (
-    	<div style={{ minHeight: '100vh', backgroundColor:'#FFFFFF' }}>
-			
-			{SessionMessage != "" ?
-                <SweetAlert
-                    warning
-                    show={ShowAlert}
-                    onConfirm={() => {
-                        setShowAlert(false)
-                        logout()
-                        window.location.href = "/login";
-                    }}
-                    btnSize="sm">
-                    {SessionMessage}
-                </SweetAlert>
-                : ""}
+    	<div style={{ height: '100vh', backgroundColor:'red' }}>
 
 			{broken && (
 			<img

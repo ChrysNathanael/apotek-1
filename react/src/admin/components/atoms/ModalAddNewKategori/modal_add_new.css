@@ -1,0 +1,20 @@
+.custom-modal {
+	border-radius: 24px;
+}
+
+.custom-modal .modal-content {
+	border-radius: 24px;
+}
+
+.form-dropdown {
+	width: 100%;
+	padding: 10px 15px; /* Menambah ruang di kiri dan menjaga simetri atas-bawah */
+	border-radius: 10px;
+	border: 1px solid grey;
+	appearance: none; /* Opsional: untuk custom panah sendiri */
+	background-color: white;
+	font-size: 14px;
+	display: flex;
+	align-items: center;
+	height: 40px; /* Sesuaikan dengan tinggi input "Nama Obat" */
+}

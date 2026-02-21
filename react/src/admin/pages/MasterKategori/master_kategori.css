@@ -1,0 +1,132 @@
+.main-page {
+    height: 100vh;
+    background-color: #FFFFFF;
+}
+
+.container-box-header-page {
+    height: 90px;
+    padding-top: 23px;
+    padding-left: 32px;
+    padding-right: 32px;
+    border-bottom: 1px solid #D1D1D1;
+    width: 100%;
+}
+
+.title-page {
+    font-size: 20px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.date-time-page {
+    font-size: 14px;
+    font-weight: 500;
+    color: #7C7C7C;
+}
+
+.dashboard-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.container-main-content-active_user {
+    display: flex;
+    justify-content: space-between;
+    padding-left: 32px;
+    padding-top: 32px;
+    padding-right: 32px;
+    width: 50%;
+}
+
+.card-content-active_user {
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.card-content-2 {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.text-lg-black {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.text-sm-grey {
+    font-size: 16px;
+    font-weight: 500;
+    color: #727272;
+}
+
+.text-sm-black {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.container-content-table {
+    width: 100%;
+    padding-left: 32px;
+    padding-right: 32px;   
+}
+
+.container-content-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 32px;
+}
+
+.container-table {
+    margin-top: 32px;
+    border: 1px solid #B6B6B6;
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+}
+
+.table-content {
+    width: 100%;
+}
+
+.table-content-tr {
+    border-bottom: 1px solid #D1D1D1;
+    text-align: center;
+}
+
+.table-content-td-header {
+    font-size: 14px;
+    font-weight: 500;
+    color: #7C7C7C;
+}
+
+.table-content-td-lg {
+    padding-top: 35px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1C1C1C;
+}
+
+.purple-spinner {
+  border-color: #6A1B9A;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.purple-spinner::after {
+  border-color: #6A1B9A;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+} 

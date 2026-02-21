@@ -15,15 +15,24 @@ import ModalFilter from './ModalFilter';
 import ModalLogout from './ModalLogout';
 import ModalTopUp from './ModalTopUp';
 import ModalExport from './ModalExport';
+import InputPrefix from './InputPrefix';
+import InputNomorVA from './InputNomorVA';
+import SkeletonListData from './SkeletonListData';
 import ModalAddNewObat from './ModalAddNewObat';
+import ModalAddNewSupplier from './ModalAddNewSupplier';
+import ModalDetailSupplier from './ModalDetailSupplier';
+import ModalAddNewSatuan from './ModalAddNewSatuan';
+import ModalAddNewKategori from './ModalAddNewKategori';
+import CardRingkasanPembayaran from './CardRingkasanPembayaran';
 import ModalSimpanTransaksi from './ModalSimpanTransaksi';
 import ModalUpdateQuantity from './ModalUpdateQuantity';
 import ModalProsesPembayaran from './ModalProsesPembayaran';
-import InputPrefix from './InputPrefix';
-import InputNomorVA from './InputNomorVA';
-import SkeletonListData from './SkeletonListData'
-
-import CardRingkasanPembayaran from './CardRingkasanPembayaran';
+import ModalAddNewVendor from './ModalAddNewVendor';
+import ModalDetailVendor from './ModalDetailVendor';
+import ModalFilterVendor from './ModalFilterVendor';
+import ModalFilterSatuan from './ModalFilterSatuan';
+import ModalFilterKategori from './ModalFilterKategori';
+import ModalFilterSupplier from './ModalFilterSupplier';
 
 export {
     Input,
@@ -47,8 +56,18 @@ export {
     ModalExport,
     SkeletonListData,
     ModalAddNewObat,
+    ModalAddNewSupplier,
+    ModalDetailSupplier,
+    ModalAddNewSatuan,
+    ModalAddNewKategori,
     ModalSimpanTransaksi,
     ModalUpdateQuantity,
     ModalProsesPembayaran,
-    CardRingkasanPembayaran
+    CardRingkasanPembayaran,
+    ModalAddNewVendor,
+    ModalDetailVendor,
+    ModalFilterVendor,
+    ModalFilterSatuan,
+    ModalFilterKategori,
+    ModalFilterSupplier
 };

@@ -22,27 +22,28 @@ import (
 type JObatRequest struct {
 	Username string
 	ParamKey string
-	Method string
-	Id string
-	NamaObat string
-	Supplier string
-	Status string
-	Page        int
-	RowPage     int
-	OrderBy     string
-	Order       string
-}
-
-type JObatResponse struct {
-	Id string
+	Method   string
+	Id       int
 	KodeObat string
 	NamaObat string
 	Supplier string
-	Status string
-	Satuan string
+	Status   string
+	Satuan   string
 	Kategori string
-	HargaRetail int
-	HargaSupplier int
+	Page     int
+	RowPage  int
+	OrderBy  string
+	Order    string
+}
+
+type JObatResponse struct {
+	Id       int
+	KodeObat string
+	NamaObat string
+	Supplier string
+	Status   string
+	Satuan   string
+	Kategori string
 }
 
 func Obat(c *gin.Context) {
@@ -52,12 +53,12 @@ func Obat(c *gin.Context) {
 	startTimeString := startTime.String()
 
 	var (
-		bodyBytes []byte
-		xRealIp   string
-		ip        string
-		logFile   string
+		bodyBytes    []byte
+		xRealIp      string
+		ip           string
+		logFile      string
 		totalRecords float64
-		totalPage float64
+		totalPage    float64
 	)
 
 	reqBody := JObatRequest{}
@@ -136,9 +137,14 @@ func Obat(c *gin.Context) {
 			paramKey := reqBody.ParamKey
 			method := reqBody.Method
 			id := reqBody.Id
+			kodeObat := reqBody.KodeObat
 			namaObat := reqBody.NamaObat
 			supplier := reqBody.Supplier
 			status := reqBody.Status
+			satuan := reqBody.Satuan
+			kategori := reqBody.Kategori
+			orderBy := reqBody.OrderBy
+			order := reqBody.Order
 			page := reqBody.Page
 			rowPage := reqBody.RowPage
 
@@ -159,7 +165,7 @@ func Obat(c *gin.Context) {
 				if page == 0 {
 					errorMessage += "Page can't null or 0 value"
 				}
-	
+
 				if rowPage == 0 {
 					errorMessage += "Page can't null or 0 value"
 				}
@@ -178,33 +184,147 @@ func Obat(c *gin.Context) {
 				return
 			}
 
-			if method == "INSERT" {
+			switch method {
+			case "INSERT":
 
-				query := fmt.Sprintf("INSERT INTO db_obat (kode_obat, nama_obat, supplier) VALUES ('%s','%s', ADDTIME(NOW(), '0:20:0'))", username, paramKey)
-				_, err := db.Exec(query)
-				if err != nil {
-					paramKey = ""
-					errorMessage = fmt.Sprintf("Error running %q: %+v", query, err)
+				if namaObat == "" {
+					errorMessage += "Nama Obat tidak boleh kosong!"
+				}
+				if supplier == "" {
+					errorMessage += "Supplier tidak boleh kosong!"
+				}
+				if satuan == "" {
+					errorMessage += "Satuan tidak boleh kosong!"
+				}
+				if kategori == "" {
+					errorMessage += "Kategori tidak boleh kosong!"
+				}
+
+				if errorMessage != "" {
 					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 					return
 				}
 
-			} else if method == "UPDATE" {
+				kodeObat, _ := helper.GenerateRandomString(6)
 
-			} else if method == "DELETE" {
+				// ------ Insert Query ------
 
-			} else if method == "SELECT" {
+				queryInsert := fmt.Sprintf("INSERT INTO db_obat (kode_obat, nama_obat, supplier, status, satuan, kategori, tgl_input) values ('%s',%s','%s','1','%s','%s',NOW())", kodeObat, namaObat, supplier, satuan, kategori)
+				_, errInsert := db.Exec(queryInsert)
+				if errInsert != nil {
+					paramKey = ""
+					errorMessage = fmt.Sprintf("Error running %q: %+v", queryInsert, errInsert)
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				dataLogObat(jObatResponses, username, "0", "Insert berhasil", totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+				return
+
+			case "UPDATE":
+
+				if id == 0 {
+					errorMessage = "Id tidak boleh kosong"
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				countObat := 0
+				queryCheck := fmt.Sprintf("SELECT COUNT(1) FROM db_obat WHERE kode_obat = '%s'", kodeObat)
+				err := db.QueryRow(queryCheck).Scan(&countObat)
+				if err != nil {
+					errorMessage = err.Error()
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				if countObat < 1 {
+					errorMessage = "Obat tidak ditemukan"
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				queryUpdate := ""
+
+				if namaObat != "" {
+					queryUpdate += fmt.Sprintf(" , nama_obat = '%s' ", namaObat)
+				}
+				if supplier == "" {
+					queryUpdate += fmt.Sprintf(" , supplier = '%s' ", supplier)
+				}
+				if status == "" {
+					queryUpdate += fmt.Sprintf(" , status = '%s' ", status)
+				}
+				if satuan == "" {
+					queryUpdate += fmt.Sprintf(" , satuan = '%s' ", satuan)
+				}
+				if kategori == "" {
+					queryUpdate += fmt.Sprintf(" , kategori = '%s' ", kategori)
+				}
+
+				if errorMessage != "" {
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				queryInsert := fmt.Sprintf("UPDATE db_obat SET tgl_update = NOW() %s WHERE id = %d", queryUpdate, id)
+				_, errInsert := db.Exec(queryInsert)
+				if errInsert != nil {
+					paramKey = ""
+					errorMessage = fmt.Sprintf("Error running %q: %+v", queryInsert, errInsert)
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+				dataLogObat(jObatResponses, username, "0", "Update berhasil", totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+				return
+
+			case "DELETE":
+
+				if id == 0 {
+					errorMessage = "Id tidak boleh kosong"
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				countObat := 0
+				queryCheck := fmt.Sprintf("SELECT COUNT(1) FROM db_obat WHERE kode_obat = '%s'", kodeObat)
+				err := db.QueryRow(queryCheck).Scan(&countObat)
+				if err != nil {
+					errorMessage = err.Error()
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				if countObat < 1 {
+					errorMessage = "Obat tidak ditemukan"
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				queryDelete := fmt.Sprintf("UPDATE db_obat SET status = '%s' WHERE id = %d", status, id)
+				_, errInsert := db.Exec(queryDelete)
+				if errInsert != nil {
+					paramKey = ""
+					errorMessage = fmt.Sprintf("Error running %q: %+v", queryDelete, errInsert)
+					dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				dataLogObat(jObatResponses, username, "0", "Delete berhasil", totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+				return
+
+			case "SELECT":
 				pageNow := (page - 1) * rowPage
 				pageNowString := strconv.Itoa(pageNow)
 				queryLimit := ""
 
 				queryWhere := " a.supplier = b.id AND a.satuan = c.id AND a.kategori = d.id "
-				if id != "" {
+				if id != 0 {
 					if queryWhere != "" {
 						queryWhere += " AND "
 					}
 
-					queryWhere += fmt.Sprintf(" id = '%s' ", id)
+					queryWhere += fmt.Sprintf(" a.id = %d ", id)
 				}
 
 				if namaObat != "" {
@@ -235,6 +355,13 @@ func Obat(c *gin.Context) {
 					queryWhere = " WHERE " + queryWhere
 				}
 
+				queryOrder := ""
+				if orderBy == "" {
+					queryOrder = " ORDER BY a.tgl_input DESC "
+				} else {
+					queryOrder = fmt.Sprintf(" ORDER BY %s %s ", orderBy, order)
+				}
+
 				totalRecords = 0
 				totalPage = 0
 				query := fmt.Sprintf("SELECT COUNT(1) AS cnt FROM db_obat a, db_supplier b, db_satuan c, db_kategori d %s", queryWhere)
@@ -254,7 +381,7 @@ func Obat(c *gin.Context) {
 				}
 
 				// ---------- start query get menu ----------
-				query1 := fmt.Sprintf("SELECT a.id, kode_obat, nama_obat, b.supplier, a.status, c.satuan, d.kategori, harga_retail, harga_supplier FROM db_obat a, db_supplier b, db_satuan c, db_kategori d %s %s", queryWhere, queryLimit)
+				query1 := fmt.Sprintf("SELECT a.id, kode_obat, nama_obat, b.supplier, a.status, c.satuan, d.kategori FROM db_obat a, db_supplier b, db_satuan c, db_kategori d %s %s %s", queryWhere, queryOrder, queryLimit)
 				rows, err := db.Query(query1)
 				defer rows.Close()
 				if err != nil {
@@ -271,8 +398,6 @@ func Obat(c *gin.Context) {
 						&jObatResponse.Status,
 						&jObatResponse.Satuan,
 						&jObatResponse.Kategori,
-						&jObatResponse.HargaRetail,
-						&jObatResponse.HargaSupplier,
 					)
 
 					jObatResponses = append(jObatResponses, jObatResponse)
@@ -287,7 +412,7 @@ func Obat(c *gin.Context) {
 
 				dataLogObat(jObatResponses, username, "0", errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
-			} else {
+			default:
 				errorMessage = "Method undifined!"
 				dataLogObat(jObatResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
@@ -318,10 +443,10 @@ func returnObat(jObatResponses []JObatResponse, errorCode string, errorMessage s
 		c.PureJSON(http.StatusOK, gin.H{
 			"ErrorCode":    errorCode,
 			"ErrorMessage": errorMessage,
-			"DateTime":   currentTime1,
-			"TotalRecords":   totalRecords,
-			"TotalPage":   totalPage,
-			"Result": jObatResponses, 
+			"DateTime":     currentTime1,
+			"TotalRecords": totalRecords,
+			"TotalPage":    totalPage,
+			"Result":       jObatResponses,
 		})
 	}
 
@@ -333,7 +458,7 @@ func returnObat(jObatResponses []JObatResponse, errorCode string, errorMessage s
 
 	diff := endTime.Sub(startTime)
 
-	logDataNew := rex.ReplaceAllString(logData + codeError + "~" + endTime.String() + "~" + diff.String() + "~" + errorMessage, "")
+	logDataNew := rex.ReplaceAllString(logData+codeError+"~"+endTime.String()+"~"+diff.String()+"~"+errorMessage, "")
 	log.Println(logDataNew)
 
 	runtime.GC()
