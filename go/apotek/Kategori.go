@@ -29,14 +29,16 @@ type JKategoriRequest struct {
 	OrderBy  string
 	Order    string
 
-	Kategori string
-	Status   int
+	Kategori  string
+	Status    string
+	Deskripsi string
 }
 
 type JKategoriResponse struct {
-	Id       string
-	Kategori string
-	Status   int
+	Id        string
+	Kategori  string
+	Status    string
+	Deskripsi string
 }
 
 func Kategori(c *gin.Context) {
@@ -122,7 +124,7 @@ func Kategori(c *gin.Context) {
 	// ------ Header Validation ------
 	if helper.ValidateHeader(bodyString, c) {
 		if err := c.ShouldBindJSON(&reqBody); err != nil {
-			errorMessage = "Error, Bind Json Data"
+			errorMessage = "Error, Bind Json Data" + err.Error()
 			dataLogKategori(jKategoriResponses, reqBody.Username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 			return
 		} else {
@@ -131,6 +133,7 @@ func Kategori(c *gin.Context) {
 			method := reqBody.Method
 			id := reqBody.Id
 			kategori := reqBody.Kategori
+			deskripsi := reqBody.Deskripsi
 			status := reqBody.Status
 			page := reqBody.Page
 			rowPage := reqBody.RowPage
@@ -198,7 +201,7 @@ func Kategori(c *gin.Context) {
 
 				// ------ Insert Query ------
 
-				queryInsert := fmt.Sprintf("INSERT INTO db_kategori (kategori, status, tgl_input) values ('%s','1', NOW())", kategori)
+				queryInsert := fmt.Sprintf("INSERT INTO db_kategori (kategori, status, tgl_input, deskripsi) values ('%s','1', NOW(), '%s')", kategori, deskripsi)
 				_, errInsert := db.Exec(queryInsert)
 				if errInsert != nil {
 					paramKey = ""
@@ -213,7 +216,7 @@ func Kategori(c *gin.Context) {
 
 			} else if method == "DELETE" {
 				var cekKategori int
-				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_kategori WHERE id = '%d'", id)
+				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_kategori WHERE id = '%s'", id)
 				err := db.QueryRow(queryCheck).Scan(&cekKategori)
 				if err != nil {
 					errorMessage = err.Error()
@@ -221,7 +224,7 @@ func Kategori(c *gin.Context) {
 					return
 				}
 
-				queryDelete := fmt.Sprintf("DELETE FROM db_kategori WHERE id = '%s'", id)
+				queryDelete := fmt.Sprintf("UPDATE db_kategori SET status = '%s' WHERE id = '%s'", status, id)
 				_, errInsert := db.Exec(queryDelete)
 				if errInsert != nil {
 					paramKey = ""
@@ -255,14 +258,13 @@ func Kategori(c *gin.Context) {
 					queryWhere += fmt.Sprintf(" kategori LIKE '%%%s%%' ", kategori)
 				}
 
-				if status != 0 {
+				if status != "" {
 					if queryWhere != "" {
 						queryWhere += " AND "
 					}
 
-					queryWhere += fmt.Sprintf(" status = '%d' ", status)
+					queryWhere += fmt.Sprintf(" status = '%s' ", status)
 				}
-				queryWhere += " status = 1 "
 
 				if queryWhere != "" {
 					queryWhere = " WHERE " + queryWhere
@@ -287,7 +289,7 @@ func Kategori(c *gin.Context) {
 				}
 
 				// ---------- start query get menu ----------
-				query1 := fmt.Sprintf("SELECT id, kategori, status FROM db_kategori %s %s", queryWhere, queryLimit)
+				query1 := fmt.Sprintf("SELECT id, ifnull(kategori,''), ifnull(deskripsi,''), status FROM db_kategori %s %s", queryWhere, queryLimit)
 				rows, err := db.Query(query1)
 				defer rows.Close()
 				if err != nil {
@@ -299,6 +301,7 @@ func Kategori(c *gin.Context) {
 					err = rows.Scan(
 						&jKategoriResponse.Id,
 						&jKategoriResponse.Kategori,
+						&jKategoriResponse.Deskripsi,
 						&jKategoriResponse.Status,
 					)
 

@@ -30,13 +30,13 @@ type JSatuanRequest struct {
 	Order    string
 
 	Satuan string
-	Status int
+	Status string
 }
 
 type JSatuanResponse struct {
 	Id     string
 	Satuan string
-	Status int
+	Status string
 }
 
 func Satuan(c *gin.Context) {
@@ -122,7 +122,7 @@ func Satuan(c *gin.Context) {
 	// ------ Header Validation ------
 	if helper.ValidateHeader(bodyString, c) {
 		if err := c.ShouldBindJSON(&reqBody); err != nil {
-			errorMessage = "Error, Bind Json Data"
+			errorMessage = "Error, Bind Json Data" + err.Error()
 			dataLogSatuan(jSatuanResponses, reqBody.Username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 			return
 		} else {
@@ -213,7 +213,7 @@ func Satuan(c *gin.Context) {
 
 			} else if method == "DELETE" {
 				var cekSatuan int
-				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_satuan WHERE id = '%d'", id)
+				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_satuan WHERE id = '%s'", id)
 				err := db.QueryRow(queryCheck).Scan(&cekSatuan)
 				if err != nil {
 					errorMessage = err.Error()
@@ -221,7 +221,7 @@ func Satuan(c *gin.Context) {
 					return
 				}
 
-				queryDelete := fmt.Sprintf("DELETE FROM db_satuan WHERE id = '%s'", id)
+				queryDelete := fmt.Sprintf("UPDATE db_satuan SET status = '%s' WHERE id = '%s'", status, id)
 				_, errInsert := db.Exec(queryDelete)
 				if errInsert != nil {
 					paramKey = ""
@@ -255,14 +255,13 @@ func Satuan(c *gin.Context) {
 					queryWhere += fmt.Sprintf(" Satuan LIKE '%%%s%%' ", Satuan)
 				}
 
-				if status != 0 {
+				if status != "" {
 					if queryWhere != "" {
 						queryWhere += " AND "
 					}
 
-					queryWhere += fmt.Sprintf(" status = '%d' ", status)
+					queryWhere += fmt.Sprintf(" status = '%s' ", status)
 				}
-				queryWhere += " status = 1 "
 
 				if queryWhere != "" {
 					queryWhere = " WHERE " + queryWhere

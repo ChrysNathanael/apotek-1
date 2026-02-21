@@ -25,7 +25,7 @@ type JSupplierRequest struct {
 	Method   string
 	Id       int
 	Supplier string
-	Status   int
+	Status   string
 	Page     int
 	RowPage  int
 	OrderBy  string
@@ -47,7 +47,7 @@ type JSupplierResponse struct {
 	Email         string
 	NomorRekening string
 	Alamat        string
-	Status        int
+	Status        string
 }
 
 func Supplier(c *gin.Context) {
@@ -148,6 +148,8 @@ func Supplier(c *gin.Context) {
 			nomorRekening := reqBody.NomorRekening
 			alamat := reqBody.Alamat
 			status := reqBody.Status
+			orderBy := reqBody.OrderBy
+			order := reqBody.Order
 			page := reqBody.Page
 			rowPage := reqBody.RowPage
 
@@ -187,7 +189,8 @@ func Supplier(c *gin.Context) {
 				return
 			}
 
-			if method == "INSERT" {
+			switch method {
+			case "INSERT":
 				if namaSupplier == "" {
 					errorMessage += "Nama Supplier tidak boleh kosong!"
 				}
@@ -236,7 +239,7 @@ func Supplier(c *gin.Context) {
 
 				dataLogSupplier(jSupplierResponses, username, "0", "Insert berhasil", totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
-			} else if method == "UPDATE" {
+			case "UPDATE":
 				if namaSupplier == "" {
 					errorMessage += "Nama Supplier tidak boleh kosong!"
 				}
@@ -256,7 +259,7 @@ func Supplier(c *gin.Context) {
 				}
 
 				var cekSupplier int
-				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_supplier WHERE supplier = '%s'", namaSupplier)
+				queryCheck := fmt.Sprintf("SELECT COUNT(1) FROM db_supplier WHERE supplier = '%s' AND id != '%d'", namaSupplier, id)
 				err := db.QueryRow(queryCheck).Scan(&cekSupplier)
 				if err != nil {
 					errorMessage = err.Error()
@@ -264,13 +267,13 @@ func Supplier(c *gin.Context) {
 					return
 				}
 
-				if cekSupplier > 0 {
-					errorMessage = "Supplier sudah terdaftar"
-					dataLogSupplier(jSupplierResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
-					return
-				}
+				// if cekSupplier > 0 {
+				// 	errorMessage = "Supplier sudah terdaftar"
+				// 	dataLogSupplier(jSupplierResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+				// 	return
+				// }
 
-				queryInsert := fmt.Sprintf("UPDATE db_supplier SET supplier = '%s', status = '%d', nomor_telp = '%s', nomor_rekening = '%s', alamat= '%s', email = '%s' WHERE id = '%d'", namaSupplier, status, nomorTelp, nomorRekening, alamat, email, id)
+				queryInsert := fmt.Sprintf("UPDATE db_supplier SET supplier = '%s', nomor_telp = '%s', nomor_rekening = '%s', alamat= '%s', email = '%s' WHERE id = '%d'", namaSupplier, nomorTelp, nomorRekening, alamat, email, id)
 				_, errInsert := db.Exec(queryInsert)
 				if errInsert != nil {
 					paramKey = ""
@@ -281,17 +284,30 @@ func Supplier(c *gin.Context) {
 				dataLogSupplier(jSupplierResponses, username, "0", "Update berhasil", totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
 
-			} else if method == "DELETE" {
-				var cekSupplier int
-				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_supplier WHERE id = '%d'", id)
-				err := db.QueryRow(queryCheck).Scan(&cekSupplier)
+			case "DELETE":
+
+				if id == 0 {
+					errorMessage = "Id tidak boleh kosong"
+					dataLogSupplier(jSupplierResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				countSupplier := 0
+				queryCheck := fmt.Sprintf("SELECT COUNT(1)  FROM db_supplier WHERE kode_supplier = '%s'", kodeSupplier)
+				err := db.QueryRow(queryCheck).Scan(&countSupplier)
 				if err != nil {
 					errorMessage = err.Error()
 					dataLogSupplier(jSupplierResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 					return
 				}
 
-				queryDelete := fmt.Sprintf("UPDATE db_supplier SET status = '0' WHERE id = '%d'", id)
+				if countSupplier < 1 {
+					errorMessage = "Supplier tidak ditemukan"
+					dataLogSupplier(jSupplierResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
+					return
+				}
+
+				queryDelete := fmt.Sprintf("UPDATE db_supplier SET status = '%s' WHERE id = '%d'", status, id)
 				_, errInsert := db.Exec(queryDelete)
 				if errInsert != nil {
 					paramKey = ""
@@ -303,7 +319,7 @@ func Supplier(c *gin.Context) {
 				dataLogSupplier(jSupplierResponses, username, "0", "Delete berhasil", totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
 
-			} else if method == "SELECT" {
+			case "SELECT":
 				pageNow := (page - 1) * rowPage
 				pageNowString := strconv.Itoa(pageNow)
 				queryLimit := ""
@@ -317,33 +333,38 @@ func Supplier(c *gin.Context) {
 					queryWhere += fmt.Sprintf(" id = '%d' ", id)
 				}
 
-				if kodeSupplier != "" {
-					if queryWhere != "" {
-						queryWhere += " AND "
-					}
+				// if kodeSupplier != "" {
+				// 	if queryWhere != "" {
+				// 		queryWhere += " AND "
+				// 	}
 
-					queryWhere += fmt.Sprintf(" kode_supplier LIKE '%%%s%%' ", kodeSupplier)
-				}
+				// 	queryWhere += fmt.Sprintf(" namaSupplier LIKE '%%%s%%' ", namaSupplier)
+				// }
 
 				if namaSupplier != "" {
 					if queryWhere != "" {
 						queryWhere += " AND "
 					}
-
 					queryWhere += fmt.Sprintf(" supplier LIKE '%%%s%%' ", namaSupplier)
 				}
 
-				if status != 0 {
+				if status != "" {
 					if queryWhere != "" {
 						queryWhere += " AND "
 					}
 
-					queryWhere += fmt.Sprintf(" status = '%d' ", status)
+					queryWhere += fmt.Sprintf(" status = '%s' ", status)
 				}
-				queryWhere += " status = 1 "
 
 				if queryWhere != "" {
 					queryWhere = " WHERE " + queryWhere
+				}
+
+				queryOrder := ""
+				if orderBy == "" {
+					queryOrder = " ORDER BY tgl_input DESC "
+				} else {
+					queryOrder = fmt.Sprintf(" ORDER BY %s %s ", orderBy, order)
 				}
 
 				totalRecords = 0
@@ -365,8 +386,9 @@ func Supplier(c *gin.Context) {
 				}
 
 				// ---------- start query get menu ----------
-				query1 := fmt.Sprintf("SELECT id, supplier, kode_supplier, ifnull(nomor_telp,''), ifnull(email,''), ifnull(nomor_rekening,'') ,ifnull(alamat,''), status FROM db_supplier %s %s", queryWhere, queryLimit)
+				query1 := fmt.Sprintf("SELECT id, supplier, kode_supplier, ifnull(nomor_telp,''), ifnull(email,''), ifnull(nomor_rekening,'') ,ifnull(alamat,''), status FROM db_supplier %s %s %s", queryWhere, queryOrder, queryLimit)
 				// fmt.Println(query1)
+
 				rows, err := db.Query(query1)
 				defer rows.Close()
 				if err != nil {
@@ -398,7 +420,7 @@ func Supplier(c *gin.Context) {
 
 				dataLogSupplier(jSupplierResponses, username, "0", errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
-			} else {
+			default:
 				errorMessage = "Method undifined!"
 				dataLogSupplier(jSupplierResponses, username, errorCode, errorMessage, totalRecords, totalPage, method, path, ip, logData, allHeader, bodyJson, c)
 				return
