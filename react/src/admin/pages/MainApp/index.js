@@ -10,6 +10,10 @@ import './mainApp.scss'
 // import InputListMenuLogin from '../ListMenuLogin/InputListMenuLogin'
 import Dashboard from '../Dashboard'
 import MasterObat from '../MasterObat'
+import MasterSupplier from '../MasterSupplier'
+import MasterSatuan from '../MasterSatuan'
+import MasterKategori from '../MasterKategori'
+import MasterVendor from '../MasterVendor'
 import PenjualanObat from '../PenjualanObat'
 
 const MainApp = () => {
@@ -59,6 +63,18 @@ const MainApp = () => {
                         </Route>
                         <Route exact path="/master-obat">
                             <MasterObat />
+                        </Route>
+                        <Route exact path="/master-supplier">
+                            <MasterSupplier />
+                        </Route>
+                        <Route exact path="/master-satuan">
+                            <MasterSatuan />
+                        </Route>
+                        <Route exact path="/master-kategori">
+                            <MasterKategori />
+                        </Route>
+                        <Route exact path="/master-vendor">
+                            <MasterVendor />
                         </Route>
                         <Route exact path="/penjualan-obat">
                             <PenjualanObat />

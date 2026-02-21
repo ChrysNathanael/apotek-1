@@ -19,7 +19,19 @@ const Routes = () => {
 				<Route exact path="/master-obat">
 					<MainApp/>
 				</Route>
+				<Route exact path="/master-supplier">
+					<MainApp/>
+				</Route>
+				<Route exact path="/master-satuan">
+					<MainApp/>
+				</Route>
+				<Route exact path="/master-kategori">
+					<MainApp/>
+				</Route>
 				<Route exact path="/penjualan-obat">
+					<MainApp/>
+				</Route>
+				<Route exact path="/master-vendor">
 					<MainApp/>
 				</Route>
 				<Route path='/'>

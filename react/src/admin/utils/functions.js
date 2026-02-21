@@ -204,6 +204,7 @@ function selisih(jam1, jam2) {
   // return selisihJam;
 }
 
+
 export {
   getParameterByName,
   validURL,

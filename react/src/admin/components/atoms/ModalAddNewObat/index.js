@@ -6,7 +6,7 @@ import Dropdown from '../Dropdown';
 import Input from '../Input';
 import {icQuestionMark} from '../../../assets';
 
-function ModalAddNewObat({ onClickShowModal, onClickCancel, listSupplier, listSatuan, listKategori, namaObat, setNamaObat, supplier, setSupplier, satuan, setSatuan, kategori, setKategori, cancelAddNew, submitAddNew }) {
+function ModalExport({ onClickShowModal, onClickCancel, listSupplier, listSatuan, listKategori, namaObat, setNamaObat, supplier, setSupplier, satuan, setSatuan, kategori, setKategori, cancelAddNew, submitAddNew }) {
     return (
         <Modal
             show={onClickShowModal}
@@ -107,4 +107,4 @@ function ModalAddNewObat({ onClickShowModal, onClickCancel, listSupplier, listSa
     );
 }
 
-export default ModalAddNewObat;
+export default ModalExport;

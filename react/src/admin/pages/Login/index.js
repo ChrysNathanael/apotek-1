@@ -99,10 +99,17 @@ const Login = () => {
             });
 
             var enckey = paths.EncKey;
-            var url = paths.URL_API_ADMIN + 'Login';
+            // var url = 'http://10.186.117.200:1001/api/v1/Login';
+            var url = paths.URL_API_ADMIN + 'Login'
             var Signature = generateSignature(enckey, requestBody)
 
+            console.log("url : ", url)
+            console.log(requestBody)
+            console.log(paths.URL_API_ADMIN)
+            console.log(paths.EncKey)
+
             setLoading(true)
+
             fetch(url, {
                 method: "POST",
                 body: requestBody,
@@ -115,6 +122,8 @@ const Login = () => {
             .then(response => response.json())
             .then((data) => {
                 setLoading(false)
+
+                // console.log("response : ", JSON.stringify(data)) --dapatkan return dari api service 
 
                 if (data.ErrorCode == "0") {
                     const date = new Date();
